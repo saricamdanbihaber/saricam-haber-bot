@@ -99,8 +99,45 @@ def handle(update):
     if not message or message["chat"]["type"] != "private":
         return
 
-    chat = message["chat"]["id"]
+        chat = message["chat"]["id"]
     text = message.get("text", "")
+
+    if chat != ADMIN and text != "/kimlik":
+        try:
+            member = api(
+                "getChatMember",
+                chat_id=CHANNEL,
+                user_id=message["from"]["id"]
+            )
+            status = member["status"]
+            joined = status in (
+                "creator", "administrator", "member"
+            ) or (
+                status == "restricted"
+                and member.get("is_member", False)
+            )
+        except Exception:
+            say(chat,
+                "Kanal üyeliğiniz şu anda kontrol edilemiyor. "
+                "Lütfen biraz sonra /start yazarak tekrar deneyin.")
+            return
+
+        if not joined:
+            categories.pop(chat, None)
+            say(
+                chat,
+                "Haber veya kayıp ilanı göndermek için önce "
+                "Sarıçamdanbihaber kanalımıza katılın.\n\n"
+                "Aşağıdaki düğmeye basıp kanalda Katıl seçin. "
+                "Ardından bu sohbete dönüp /start yazın.",
+                reply_markup={
+                    "inline_keyboard": [[{
+                        "text": "📢 Kanala Katıl",
+                        "url": "https://t.me/saricamdanbihaber"
+                    }]]
+                }
+            )
+            return
 
     if text == "/kimlik":
         say(chat, f"Telegram kullanıcı numaran: {chat}")
